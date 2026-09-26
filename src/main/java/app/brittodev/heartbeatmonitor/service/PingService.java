@@ -18,11 +18,13 @@ public class PingService {
     private final PingRepository pingRepository;
     private final CheckRepository checkRepository;
     private final Clock clock;
+    private final AlertService alertService;
 
-    public PingService(PingRepository pingRepository, CheckRepository checkRepository, Clock clock) {
+    public PingService(PingRepository pingRepository, CheckRepository checkRepository, Clock clock, AlertService alertService) {
         this.pingRepository = pingRepository;
         this.checkRepository = checkRepository;
         this.clock = clock;
+        this.alertService = alertService;
     }
 
     public void ping(String pingToken) {
@@ -44,13 +46,20 @@ public class PingService {
                 receivedAt.plusSeconds(check.getIntervalSeconds())
         ); // calculate and set next expected at
 
-        if (check.getStatus() == CheckStatus.DOWN) {
+        boolean recovered = check.getStatus() == CheckStatus.DOWN;
+
+        if (recovered) {
             check.setStatus(CheckStatus.UP);
         }
 
         check.setUpdatedAt(receivedAt);
 
         checkRepository.save(check);
+
+        if (recovered) {
+            alertService.alertRecovery(check);
+        }
+
     }
 
 }
