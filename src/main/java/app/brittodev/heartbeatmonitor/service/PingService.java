@@ -8,6 +8,7 @@ import app.brittodev.heartbeatmonitor.entity.PingHistory;
 import app.brittodev.heartbeatmonitor.repository.CheckRepository;
 import app.brittodev.heartbeatmonitor.repository.PingRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -27,6 +28,7 @@ public class PingService {
         this.alertService = alertService;
     }
 
+    @Transactional
     public void ping(String pingToken) {
 
         Check check = checkRepository
