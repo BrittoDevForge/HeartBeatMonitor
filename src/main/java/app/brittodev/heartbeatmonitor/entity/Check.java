@@ -44,6 +44,7 @@ public class Check {
     private Instant lastPingAt;
     @Column(name = "next_expected_at")
     private Instant nextExpectedAt;
+
     private Instant createdAt;
     private Instant updatedAt;
 }

@@ -3,6 +3,7 @@ package app.brittodev.heartbeatmonitor.service;
 
 import app.brittodev.heartbeatmonitor.dto.CheckResponse;
 import app.brittodev.heartbeatmonitor.entity.Check;
+import app.brittodev.heartbeatmonitor.entity.CheckStatus;
 import app.brittodev.heartbeatmonitor.entity.PingHistory;
 import app.brittodev.heartbeatmonitor.repository.CheckRepository;
 import app.brittodev.heartbeatmonitor.repository.PingRepository;
@@ -25,6 +26,7 @@ public class PingService {
     }
 
     public void ping(String pingToken) {
+
         Check check = checkRepository
                 .findByPingToken(pingToken)
                 .orElseThrow( () -> new RuntimeException("Invalid Token"));
@@ -38,10 +40,15 @@ public class PingService {
         pingRepository.save(ping);
 
         check.setLastPingAt(receivedAt); // changing last ping after the ping
-
         check.setNextExpectedAt(
                 receivedAt.plusSeconds(check.getIntervalSeconds())
         ); // calculate and set next expected at
+
+        if (check.getStatus() == CheckStatus.DOWN) {
+            check.setStatus(CheckStatus.UP);
+        }
+
+        check.setUpdatedAt(receivedAt);
 
         checkRepository.save(check);
     }
