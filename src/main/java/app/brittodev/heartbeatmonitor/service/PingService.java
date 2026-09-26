@@ -38,7 +38,7 @@ public class PingService {
         Check check = checkRepository.findByPingTokenForUpdate(pingToken)
                 .orElseThrow(() -> new RuntimeException("Invalid ping token"));
 
-        boolean late = receivedAt.isAfter(check.getNextExpectedAt());
+        boolean recovered = check.getStatus() == CheckStatus.DOWN;
 
         PingHistory ping = new PingHistory();
 
@@ -52,11 +52,6 @@ public class PingService {
                 receivedAt.plusSeconds(check.getIntervalSeconds())
         ); // calculate and set next expected at
 
-        boolean recovered = check.getStatus() == CheckStatus.DOWN;
-
-        boolean outageDetectedByPing =
-                check.getStatus() == CheckStatus.UP && late;
-
 
         if (recovered) {
             check.setStatus(CheckStatus.UP);
@@ -67,13 +62,9 @@ public class PingService {
 
         checkRepository.save(check);
 
-        if (outageDetectedByPing) {
-            executer.execute(
-                    () -> alertService.alertDown(check)
-            );
-        }
 
-        if (recovered || outageDetectedByPing) {
+
+        if (recovered) {
             executer.execute(
                     () -> alertService.alertRecovery(check)
             );

@@ -6,6 +6,7 @@ import app.brittodev.heartbeatmonitor.entity.CheckStatus;
 import app.brittodev.heartbeatmonitor.repository.CheckRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -26,6 +27,7 @@ public class SweeperService {
         this.executer = executer;
     }
 
+    @Transactional
     public void sweep() {
         Instant now = Instant.now(clock);
         List<Check> overdueChecks =
@@ -38,10 +40,15 @@ public class SweeperService {
 
             check = checkRepository.findByIdForUpdate(check.getId())
                             .orElseThrow( () -> new RuntimeException("check not found"));
+
+            if (check.getStatus() != CheckStatus.UP || check.getNextExpectedAt().isAfter(now)) {
+                continue;
+            }
             check.setStatus(CheckStatus.DOWN);
             check.setUpdatedAt(now);
 
             checkRepository.save(check);
+
             Check finalCheck = check;
             executer.execute(
                     () -> alertService.alertDown(finalCheck)
@@ -49,6 +56,7 @@ public class SweeperService {
         }
     }
 
+    @Transactional
     @Scheduled(fixedDelayString = "${heartbeat.sweeper.interval-ms:10000}")
     public void scheduledSweep() {
         sweep();
