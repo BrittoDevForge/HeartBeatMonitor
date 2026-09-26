@@ -17,11 +17,13 @@ public class SweeperService {
     private final CheckRepository checkRepository;
     private final AlertService alertService;
     private final Clock clock;
+    private final AfterCommitExecuter executer;
 
-    public SweeperService(CheckRepository checkRepository, AlertService alertService, Clock clock) {
+    public SweeperService(CheckRepository checkRepository, AlertService alertService, Clock clock, AfterCommitExecuter executer) {
         this.checkRepository = checkRepository;
         this.alertService = alertService;
         this.clock = clock;
+        this.executer = executer;
     }
 
     public void sweep() {
@@ -33,11 +35,17 @@ public class SweeperService {
                 );
 
         for (Check check : overdueChecks) {
+
+            check = checkRepository.findByIdForUpdate(check.getId())
+                            .orElseThrow( () -> new RuntimeException("check not found"));
             check.setStatus(CheckStatus.DOWN);
             check.setUpdatedAt(now);
 
             checkRepository.save(check);
-            alertService.alertDown(check);
+            Check finalCheck = check;
+            executer.execute(
+                    () -> alertService.alertDown(finalCheck)
+            );
         }
     }
 

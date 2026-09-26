@@ -20,21 +20,25 @@ public class PingService {
     private final CheckRepository checkRepository;
     private final Clock clock;
     private final AlertService alertService;
+    private final AfterCommitExecuter executer;
 
-    public PingService(PingRepository pingRepository, CheckRepository checkRepository, Clock clock, AlertService alertService) {
+    public PingService(PingRepository pingRepository, CheckRepository checkRepository, Clock clock, AlertService alertService, AfterCommitExecuter executer) {
         this.pingRepository = pingRepository;
         this.checkRepository = checkRepository;
         this.clock = clock;
         this.alertService = alertService;
+        this.executer = executer;
     }
 
     @Transactional
     public void ping(String pingToken) {
 
-        Check check = checkRepository
-                .findByPingToken(pingToken)
-                .orElseThrow( () -> new RuntimeException("Invalid Token"));
         Instant receivedAt = Instant.now(clock);
+
+        Check check = checkRepository.findByPingTokenForUpdate(pingToken)
+                .orElseThrow(() -> new RuntimeException("Invalid ping token"));
+
+        boolean late = receivedAt.isAfter(check.getNextExpectedAt());
 
         PingHistory ping = new PingHistory();
 
@@ -50,16 +54,29 @@ public class PingService {
 
         boolean recovered = check.getStatus() == CheckStatus.DOWN;
 
+        boolean outageDetectedByPing =
+                check.getStatus() == CheckStatus.UP && late;
+
+
         if (recovered) {
             check.setStatus(CheckStatus.UP);
         }
+
 
         check.setUpdatedAt(receivedAt);
 
         checkRepository.save(check);
 
-        if (recovered) {
-            alertService.alertRecovery(check);
+        if (outageDetectedByPing) {
+            executer.execute(
+                    () -> alertService.alertDown(check)
+            );
+        }
+
+        if (recovered || outageDetectedByPing) {
+            executer.execute(
+                    () -> alertService.alertRecovery(check)
+            );
         }
 
     }
