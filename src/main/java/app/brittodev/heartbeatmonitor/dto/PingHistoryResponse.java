@@ -1,4 +1,10 @@
 package app.brittodev.heartbeatmonitor.dto;
 
-public record PingHistoryResponse() {
+import java.time.Instant;
+
+public record PingHistoryResponse(
+        Long id,
+        Long checkId,
+        Instant receivedAt
+) {
 }

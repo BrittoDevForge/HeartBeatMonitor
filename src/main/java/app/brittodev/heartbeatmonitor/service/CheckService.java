@@ -4,9 +4,12 @@ package app.brittodev.heartbeatmonitor.service;
 import app.brittodev.heartbeatmonitor.dto.CheckListResponse;
 import app.brittodev.heartbeatmonitor.dto.CheckResponse;
 import app.brittodev.heartbeatmonitor.dto.CreateCheckRequest;
+import app.brittodev.heartbeatmonitor.dto.PingHistoryResponse;
 import app.brittodev.heartbeatmonitor.entity.Check;
 import app.brittodev.heartbeatmonitor.entity.CheckStatus;
+import app.brittodev.heartbeatmonitor.entity.PingHistory;
 import app.brittodev.heartbeatmonitor.repository.CheckRepository;
+import app.brittodev.heartbeatmonitor.repository.PingRepository;
 import app.brittodev.heartbeatmonitor.util.PingTokenGenerator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,14 +25,16 @@ public class CheckService {
     private final CheckRepository checkRepository;
     private final PingTokenGenerator pingTokenGenerator;
     private final Clock clock;
+    private final PingRepository pingRepository;
 
     public CheckService(
             CheckRepository checkRepository,
-            PingTokenGenerator pingTokenGenerator, Clock clock
+            PingTokenGenerator pingTokenGenerator, Clock clock, PingRepository pingRepository
     ) {
         this.checkRepository = checkRepository;
         this.pingTokenGenerator = pingTokenGenerator;
         this.clock = clock;
+        this.pingRepository = pingRepository;
     }
 
     public CheckResponse registerCheck(CreateCheckRequest request) {
@@ -78,6 +83,20 @@ public class CheckService {
     }
 
 
+    public Page<PingHistoryResponse> listPingHistory(
+            Long checkId,
+            Pageable pageable
+    ) {
+        return pingRepository.findByCheckIdOrderByReceivedAtDesc(
+                checkId,pageable
+        ).map( ping ->
+                new PingHistoryResponse(
+                        ping.getId(),
+                        ping.getCheckId(),
+                        ping.getReceivedAt()
+                )
+        );
+    }
 
 
 

@@ -4,6 +4,7 @@ package app.brittodev.heartbeatmonitor.controller;
 import app.brittodev.heartbeatmonitor.dto.CheckListResponse;
 import app.brittodev.heartbeatmonitor.dto.CheckResponse;
 import app.brittodev.heartbeatmonitor.dto.CreateCheckRequest;
+import app.brittodev.heartbeatmonitor.dto.PingHistoryResponse;
 import app.brittodev.heartbeatmonitor.service.CheckService;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.validation.Valid;
@@ -51,4 +52,17 @@ public class CheckController {
                 service.listChecks(pageable)
         );
     }
+
+    @GetMapping("/pings/{checkId}")
+    public ResponseEntity<Page<PingHistoryResponse>> getPingHistory(
+            @PathVariable("checkId") Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        Pageable pageable = PageRequest.of(page,size);
+        return ResponseEntity.ok(
+                service.listPingHistory(id,pageable)
+        );
+    }
+
 }
