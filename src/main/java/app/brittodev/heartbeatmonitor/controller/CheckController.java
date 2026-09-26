@@ -4,6 +4,7 @@ package app.brittodev.heartbeatmonitor.controller;
 import app.brittodev.heartbeatmonitor.dto.CheckResponse;
 import app.brittodev.heartbeatmonitor.dto.CreateCheckRequest;
 import app.brittodev.heartbeatmonitor.service.CheckService;
+import jakarta.validation.Valid;
 import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,7 @@ public class CheckController {
 
     @PostMapping("/register")
     public ResponseEntity<CheckResponse> registerCheck(
-            @RequestBody CreateCheckRequest request
+            @Valid @RequestBody CreateCheckRequest request
     ) {
         log.atInfo().log("Current time : " + Instant.now()); // checking current server time
         return new ResponseEntity<>(

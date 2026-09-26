@@ -9,6 +9,7 @@ import app.brittodev.heartbeatmonitor.repository.CheckRepository;
 import app.brittodev.heartbeatmonitor.util.PingTokenGenerator;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Instant;
 
 @Service
@@ -16,20 +17,21 @@ public class CheckService {
 
     private final CheckRepository checkRepository;
     private final PingTokenGenerator pingTokenGenerator;
+    private final Clock clock;
 
     public CheckService(
             CheckRepository checkRepository,
-            PingTokenGenerator pingTokenGenerator
+            PingTokenGenerator pingTokenGenerator, Clock clock
     ) {
         this.checkRepository = checkRepository;
         this.pingTokenGenerator = pingTokenGenerator;
+        this.clock = clock;
     }
 
     public CheckResponse registerCheck(CreateCheckRequest request) {
 
         String token = pingTokenGenerator.generate();
-        Instant now = Instant.now();
-
+        Instant now = Instant.now(clock);
         Check check = new Check();
 
         check.setName(request.name());
