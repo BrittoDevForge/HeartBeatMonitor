@@ -1,12 +1,16 @@
 package app.brittodev.heartbeatmonitor.service;
 
 
+import app.brittodev.heartbeatmonitor.dto.CheckListResponse;
 import app.brittodev.heartbeatmonitor.dto.CheckResponse;
 import app.brittodev.heartbeatmonitor.dto.CreateCheckRequest;
 import app.brittodev.heartbeatmonitor.entity.Check;
 import app.brittodev.heartbeatmonitor.entity.CheckStatus;
 import app.brittodev.heartbeatmonitor.repository.CheckRepository;
 import app.brittodev.heartbeatmonitor.util.PingTokenGenerator;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
@@ -60,7 +64,18 @@ public class CheckService {
         );
     }
 
-
+    public Page<CheckListResponse> listChecks(Pageable pageable) {
+        return checkRepository.findAll(pageable)
+                .map( check -> new CheckListResponse(
+                        check.getId(),
+                        check.getName(),
+                        check.getIntervalSeconds(),
+                        check.getStatus().name(),
+                        check.getLastPingAt(),
+                        check.getNextExpectedAt()
+                        )
+                );
+    }
 
 
 
