@@ -1,6 +1,7 @@
 package app.brittodev.heartbeatmonitor.service;
 
 
+import app.brittodev.heartbeatmonitor.dto.CheckResponse;
 import app.brittodev.heartbeatmonitor.dto.CreateCheckRequest;
 import app.brittodev.heartbeatmonitor.entity.Check;
 import app.brittodev.heartbeatmonitor.entity.CheckStatus;
@@ -24,7 +25,7 @@ public class CheckService {
         this.pingTokenGenerator = pingTokenGenerator;
     }
 
-    public Check registerCheck(CreateCheckRequest request) {
+    public CheckResponse registerCheck(CreateCheckRequest request) {
 
         String token = pingTokenGenerator.generate();
         Instant now = Instant.now();
@@ -42,8 +43,22 @@ public class CheckService {
         check.setCreatedAt(now);
         check.setUpdatedAt(now);
 
-        return checkRepository.save(check);
+        Check savedCheck = checkRepository.save(check);
+
+        String pingUrl = "/api/v1/ping/" + savedCheck.getPingToken();
+
+        return new CheckResponse(
+                check.getId(),
+                check.getName(),
+                check.getIntervalSeconds(),
+                check.getStatus().name(),
+                check.getLastPingAt(),
+                check.getNextExpectedAt(),
+                pingUrl
+        );
     }
+
+
 
 
 
