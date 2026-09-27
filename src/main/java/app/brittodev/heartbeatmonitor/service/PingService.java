@@ -5,6 +5,7 @@ import app.brittodev.heartbeatmonitor.dto.CheckResponse;
 import app.brittodev.heartbeatmonitor.entity.Check;
 import app.brittodev.heartbeatmonitor.entity.CheckStatus;
 import app.brittodev.heartbeatmonitor.entity.PingHistory;
+import app.brittodev.heartbeatmonitor.exception.customExceptions.ResourceNotFoundException;
 import app.brittodev.heartbeatmonitor.repository.CheckRepository;
 import app.brittodev.heartbeatmonitor.repository.PingRepository;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class PingService {
         Instant receivedAt = Instant.now(clock);
 
         Check check = checkRepository.findByPingTokenForUpdate(pingToken)
-                .orElseThrow(() -> new RuntimeException("Invalid ping token"));
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid ping token"));
 
         boolean recovered = check.getStatus() == CheckStatus.DOWN;
 

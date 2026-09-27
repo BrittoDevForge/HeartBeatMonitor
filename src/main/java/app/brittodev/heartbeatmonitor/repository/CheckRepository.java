@@ -17,7 +17,6 @@ import java.util.Optional;
 
 @Repository
 public interface CheckRepository extends JpaRepository<Check,Long> {
-    Optional<Check> findByPingToken(String pingToken);
 
     List<Check> findByStatusAndNextExpectedAtLessThanEqual(
             CheckStatus status,

@@ -3,6 +3,7 @@ package app.brittodev.heartbeatmonitor.service;
 
 import app.brittodev.heartbeatmonitor.entity.Check;
 import app.brittodev.heartbeatmonitor.entity.CheckStatus;
+import app.brittodev.heartbeatmonitor.exception.customExceptions.ResourceNotFoundException;
 import app.brittodev.heartbeatmonitor.repository.CheckRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ public class SweeperService {
         for (Check check : overdueChecks) {
 
             check = checkRepository.findByIdForUpdate(check.getId())
-                            .orElseThrow( () -> new RuntimeException("check not found"));
+                            .orElseThrow( () -> new ResourceNotFoundException("check not found"));
 
             if (check.getStatus() != CheckStatus.UP || check.getNextExpectedAt().isAfter(now)) {
                 continue;

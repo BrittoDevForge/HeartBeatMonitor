@@ -8,6 +8,7 @@ import app.brittodev.heartbeatmonitor.dto.PingHistoryResponse;
 import app.brittodev.heartbeatmonitor.entity.Check;
 import app.brittodev.heartbeatmonitor.entity.CheckStatus;
 import app.brittodev.heartbeatmonitor.entity.PingHistory;
+import app.brittodev.heartbeatmonitor.exception.customExceptions.ResourceNotFoundException;
 import app.brittodev.heartbeatmonitor.mapper.CheckMapper;
 import app.brittodev.heartbeatmonitor.repository.CheckRepository;
 import app.brittodev.heartbeatmonitor.repository.PingRepository;
@@ -58,6 +59,8 @@ public class CheckService {
             Long checkId,
             Pageable pageable
     ) {
+        checkRepository.findById(checkId).orElseThrow( () ->
+                new ResourceNotFoundException("Check is not found"));
         Page<PingHistory> pings = pingRepository
                 .findByCheckIdOrderByReceivedAtDesc(checkId,pageable);
         return CheckMapper.toPingHistoryResponse(pings);
