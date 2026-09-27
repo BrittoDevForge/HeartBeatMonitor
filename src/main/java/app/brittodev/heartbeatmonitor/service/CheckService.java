@@ -8,6 +8,7 @@ import app.brittodev.heartbeatmonitor.dto.PingHistoryResponse;
 import app.brittodev.heartbeatmonitor.entity.Check;
 import app.brittodev.heartbeatmonitor.entity.CheckStatus;
 import app.brittodev.heartbeatmonitor.entity.PingHistory;
+import app.brittodev.heartbeatmonitor.mapper.CheckMapper;
 import app.brittodev.heartbeatmonitor.repository.CheckRepository;
 import app.brittodev.heartbeatmonitor.repository.PingRepository;
 import app.brittodev.heartbeatmonitor.util.PingTokenGenerator;
@@ -41,63 +42,25 @@ public class CheckService {
 
         String token = pingTokenGenerator.generate();
         Instant now = Instant.now(clock);
-        Check check = new Check();
 
-        check.setName(request.name());
-        check.setIntervalSeconds(request.intervalSeconds());
-        check.setPingToken(token);
-        check.setStatus(CheckStatus.UP);
-        check.setLastPingAt(null);
-        check.setNextExpectedAt(
-                now.plusSeconds(request.intervalSeconds())
-        );
-        check.setCreatedAt(now);
-        check.setUpdatedAt(now);
-
+        Check check = CheckMapper.toCheckEntity(request,token,now);
         Check savedCheck = checkRepository.save(check);
 
-        String pingUrl = "/api/v1/ping/" + savedCheck.getPingToken();
-
-        return new CheckResponse(
-                check.getId(),
-                check.getName(),
-                check.getIntervalSeconds(),
-                check.getStatus().name(),
-                check.getLastPingAt(),
-                check.getNextExpectedAt(),
-                pingUrl
-        );
+        return CheckMapper.toCheckResponse(savedCheck);
     }
 
     public Page<CheckListResponse> listChecks(Pageable pageable) {
-        return checkRepository.findAll(pageable)
-                .map( check -> new CheckListResponse(
-                        check.getId(),
-                        check.getName(),
-                        check.getIntervalSeconds(),
-                        check.getStatus().name(),
-                        check.getLastPingAt(),
-                        check.getNextExpectedAt()
-                        )
-                );
+        Page<Check> checks = checkRepository.findAll(pageable);
+        return CheckMapper.toCheckListResponse(checks);
     }
-
 
     public Page<PingHistoryResponse> listPingHistory(
             Long checkId,
             Pageable pageable
     ) {
-        return pingRepository.findByCheckIdOrderByReceivedAtDesc(
-                checkId,pageable
-        ).map( ping ->
-                new PingHistoryResponse(
-                        ping.getId(),
-                        ping.getCheckId(),
-                        ping.getReceivedAt()
-                )
-        );
+        Page<PingHistory> pings = pingRepository
+                .findByCheckIdOrderByReceivedAtDesc(checkId,pageable);
+        return CheckMapper.toPingHistoryResponse(pings);
     }
-
-
 
 }
